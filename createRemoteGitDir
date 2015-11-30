@@ -1,8 +1,23 @@
 #!/bin/bash
 #Just a simple bash script to facilitate remote git directory creation from a local directory
 {    
+	echo "enter github or bitbucket:"
+    read githubOrBitbucket   
+    
+    if [ $githubOrBitbucket = "github" ]
+		then
+			echo "GitHub Selected"  
+	fi 
+	if [ $githubOrBitbucket = "bitbucket" ]
+		then	
+			echo "BitBucket Selected"  
+    fi   
+	 
     echo "enter a valid git username:"
     read username
+    #only used in bitbucket dir creation cURL command
+    echo "enter a valid git password:"
+    read -s password
     echo "enter a valid project name: (as in 'MyProject')"
     read projectname
     echo "enter valid path to our project directory: (as in '~/Myproject')"
@@ -13,7 +28,8 @@
     pwd
     echo "enter commit message:"
     read commitmessage
-                
+             
+   
     echo "Start - Creating remote Git Directory named '$projectname'"
     
     echo "Initializing Repo $projectname locally"
@@ -26,7 +42,17 @@
     git commit -m "$commitmessage"
     git status
     echo "Create Repo $projectname on the remote server"
-    curl -u "$username" https://api.github.com/user/repos -d '{"name":"'$projectname'"}'
+    
+    if [ $githubOrBitbucket = "github" ]
+		then			
+			curl -u "$username" https://api.github.com/user/repos -d '{"name":"'$projectname'"}'
+	fi
+	if [ $githubOrBitbucket = "bitbucket" ]
+		then	
+			echo "CURLING $password"
+			curl --user $username:$password https://api.bitbucket.org/1.0/repositories/ --data name=$projectname --data is_private='true'
+			
+    fi
     
     echo "Enter alias for the remote repository : (such as 'origin')"
     read origin
@@ -34,13 +60,39 @@
     git remote rm $origin
     git remote -v
     
-    echo "Connect alias $origin to url repo: git@github.com:$username/$projectname.git"    
-    git remote add origin git@github.com:$username/$projectname.git
+    if [ $githubOrBitbucket = "github" ]
+		then
+			echo "Connect alias $origin to url repo: git@github.com:$username/$projectname.git"  
+	fi
+	if [ $githubOrBitbucket = "bitbucket" ]
+		then
+			echo "CONNECTING.."	
+			echo "Connect alias $origin to url repo:  git@bitbucket.org:$username/$projectname.git"  
+    fi
+      
+    if [ $githubOrBitbucket = "github" ]
+		then			
+			git remote add origin git@github.com:$username/$projectname.git
+	fi
+	if [ $githubOrBitbucket = "bitbucket" ]
+		then			
+			echo "REMOTE ADDING.."	
+			git remote add origin https://$username@bitbucket.org/$username/$projectname.git
+    fi
+    
     
     echo "push changes across to remote server"    
     git push -u origin master
         
-    echo "Finished - Creating remote Git Directory named 'git@github.com:$username/$projectname.git'"
+    if [ $githubOrBitbucket = "github" ]
+		then
+			echo "Finished - Creating remote Git Directory named 'git@github.com:$username/$projectname.git'"
+	fi
+	if [ $githubOrBitbucket = "bitbucket" ]
+		then
+			echo "Finished - Creating remote Git Directory named 'git@bitbucket.com:$username/$projectname.git'"
+    fi
+    
 }
 
   
